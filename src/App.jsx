@@ -396,7 +396,7 @@ function AdminPanel({ orders, onUpdate }) {
       </div>
     </div>
   );
-}
+
 
 function Card({ title, children, className = "" }) {
   return (

@@ -1,0 +1,3 @@
+import { NextResponse } from 'next/server';
+export function middleware(request){if(!request.nextUrl.pathname.startsWith('/admin')) return NextResponse.next();const auth=request.headers.get('authorization')||'';const [scheme,encoded]=auth.split(' ');let ok=false;if(scheme==='Basic'&&encoded){try{const decoded=atob(encoded);const i=decoded.indexOf(':');const user=decoded.slice(0,i);const pass=decoded.slice(i+1);ok=Boolean(process.env.ADMIN_USER&&process.env.ADMIN_PASSWORD)&&user===process.env.ADMIN_USER&&pass===process.env.ADMIN_PASSWORD;}catch{ok=false;}}if(ok)return NextResponse.next();return new NextResponse('Authentication required',{status:401,headers:{'WWW-Authenticate':'Basic realm="Ibnalarabstore Admin"'}})}
+export const config={matcher:'/admin/:path*'};

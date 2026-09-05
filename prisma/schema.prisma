@@ -1,0 +1,60 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  phone     String   @unique
+  balance   Float    @default(0.0) // رصيد المحفظة بالليرة التركية أو الدولار
+  role      Role     @default(USER) // USER أو ADMIN لمنع دخول الزوار للوحة الأدمن
+  createdAt DateTime @default(now())
+  orders    Order[]
+  deposits  WalletDeposit[]
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  productName String
+  playerId    String      // معرف اللاعب الشحن التلقائي
+  price       Float
+  status      OrderStatus @default(PENDING) // PENDING, SUCCESS, FAILED
+  apiResponse String?     // استجابة سيرفر الشحن التلقائي لتوثيق العملية
+  createdAt   DateTime    @default(now())
+}
+
+enum OrderStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model WalletDeposit {
+  id            String        @id @default(uuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  amount        Float
+  transferProof String        // نص أو رقم الحوالة المرسلة للإدارة
+  status        DepositStatus @default(PENDING) // معلق، مقبول، مرفوض
+  createdAt     DateTime      @default(now())
+}
+
+enum DepositStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+

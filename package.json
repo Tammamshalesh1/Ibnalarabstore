@@ -1,0 +1,1 @@
+{"name":"ibnalarabstore","version":"1.0.0","private":true,"scripts":{"dev":"next dev","build":"next build","start":"next start","lint":"next lint","postinstall":"prisma generate"},"dependencies":{"@prisma/client":"latest","next":"latest","react":"latest","react-dom":"latest"},"devDependencies":{"prisma":"latest"},"engines":{"node":">=20"}}

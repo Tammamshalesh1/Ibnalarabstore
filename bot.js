@@ -3,7 +3,7 @@ const { fetchAlyalinaProducts } = require('./scraper');
 
 // ضع هنا التوكن الخاص بالبوت الذي حصلت عليه من BotFather
 const BOT_TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'; 
-const bot = new Telegraf(8698192117:AAE6YUBg2XluoXe0nHVYlR5AFyGNFNEsv-k);
+const bot = new Telegraf('8698192117:AAE6YUBg2XluoXe0nHVYlR5AFyGNFNEsv-k');
 
 bot.start((ctx) => {
     ctx.reply('مرحباً بك في متجر منتجات Alyalina المؤتمت! 🌸\nاضغط على الزر أدناه لجلب أحدث المنتجات والأسعار المحدثة تلقائياً مع هامش الربح الخاص بك.', 

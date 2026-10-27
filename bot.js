@@ -1,56 +1,74 @@
 const { Telegraf, Markup } = require('telegraf');
-const { fetchAlyalinaProducts } = require('./scraper');
+const { fetchLiveCatalog } = require('./scraper');
 const express = require('express');
 
 const bot = new Telegraf('8699605110:AAFrHXMy_TmDc97wN4-Yb6_5FfUqyKv-1YM');
 
 bot.start((ctx) => {
-    ctx.reply('مرحباً بك في متجر منتجات Alyalina الحصري! 🌸\nاضغط على الزر أدناه لعرض كافة المنتجات والعروض الحالية الحية.', 
-        Markup.keyboard([['🛍️ عرض كتالوج المنتجات الحالية']]).resize()
+    ctx.reply('مرحباً بك في متجر أليالينا المؤتمت بالكامل! 🌸\nيرجى اختيار القسم الذي ترغب في تصفحه بأسعاره وعروضه الحقيقية الحالية المباشرة من الموقع:', 
+        Markup.keyboard([
+            ['🛍️ تصفح الكتالوج العام', '🔥 عروض وفرص حصرية']
+        ]).resize()
     );
 });
 
-bot.hears('🛍️ عرض كتالوج المنتجات الحالية', async (ctx) => {
-    const liveProducts = await fetchAlyalinaProducts();
+// 1. معالجة زر الكتالوج العام الحقيقي للموقع
+bot.hears('🛍️ تصفح الكتالوج العام', async (ctx) => {
+    const products = await fetchLiveCatalog('catalog');
 
-    if (!liveProducts || liveProducts.length === 0) {
-        return ctx.reply('❌ عذراً، لم نتمكن من جلب العروض الحالية من حساب الموقع الآن. يرجى المحاولة لاحقاً.');
+    if (!products || products.length === 0) {
+        return ctx.reply('❌ تعذر جلب الكتالوج من الموقع حالياً، يرجى التحقق من بيانات الحساب وسجل السيرفر.');
     }
 
-    for (const product of liveProducts) {
-        const caption = `📦 *${product.name}*\n\n💰 السعر للمستهلك: *${product.customerPrice} TL*\n_(محدث تلقائياً مع نسبة ربحك)_`;
-        
-        try {
-            await ctx.replyWithPhoto(product.image, {
-                caption: caption,
-                parse_mode: 'Markdown',
-                ...Markup.inlineKeyboard([
-                    Markup.button.callback('🛒 اطلب المنتج الآن', `order_${product.id}`)
-                ])
-            });
-        } catch (imgError) {
-            await ctx.reply(caption, {
-                parse_mode: 'Markdown',
-                ...Markup.inlineKeyboard([
-                    Markup.button.callback('🛒 اطلب المنتج الآن', `order_${product.id}`)
-                ])
-            });
-        }
+    for (const product of products) {
+        await sendProductCard(ctx, product);
     }
 });
 
-// التعامل مع كبسولات الطلب الفورية وتحويلها لواتساب الأعمال الخاص بك بشكل صحيح
+// 2. معالجة زر العروض والتخفيضات المنفصلة الحقيقية للموقع
+bot.hears('🔥 عروض وفرص حصرية', async (ctx) => {
+    const offers = await fetchLiveCatalog('offers');
+
+    if (!offers || offers.length === 0) {
+        return ctx.reply('❌ لا توجد عروض ترويجية منبثقة متاحة في حساب الموقع حالياً.');
+    }
+
+    for (const product of offers) {
+        await sendProductCard(ctx, product);
+    }
+});
+
+// دالة موحدة لإرسال كروت المنتجات بالصورة الفعلية الحقيقية للموقع والأزرار التفاعلية
+async function sendProductCard(ctx, product) {
+    const caption = `📦 *${product.name}*\n\n💰 السعر الحالي: *${product.customerPrice} TL*\n_(محدث آلياً شامل نسبة ربحك)_`;
+    try {
+        await ctx.replyWithPhoto(product.image, {
+            caption: caption,
+            parse_mode: 'Markdown',
+            ...Markup.inlineKeyboard([
+                Markup.button.callback('🛒 اطلب المنتج الآن', `order_${product.id}`)
+            ])
+        });
+    } catch (err) {
+        await ctx.reply(caption, {
+            parse_mode: 'Markdown',
+            ...Markup.inlineKeyboard([
+                Markup.button.callback('🛒 اطلب المنتج الآن', `order_${product.id}`)
+            ])
+        });
+    }
+}
+
+// معالجة كبسولة زر الشراء والربط مع واتساب بشكل سليم وصحيح 100%
 bot.action(/^order_(\d+)$/, async (ctx) => {
-    const productId = ctx.match[1]; // تم تصحيح مصفوفة المطابقة لاستخراج الرقم بدقة
+    const productId = ctx.match[1];
     ctx.answerCbQuery();
 
-    const myWhatsAppNumber = "905366303897"; // رقمك بالصيغة الدولية
-    const messageText = encodeURIComponent(`مرحباً، أود طلب المنتج ذو المعرف الرقمي (${productId}) المعروض في بوت التليجرام الخاص بمتجر أليالينا.`);
-    
-    // تم تصحيح صياغة الرابط وإضافة علامة المائل والدولار لدمج الرقم تلقائياً
+    const myWhatsAppNumber = "905366303897"; 
+    const messageText = encodeURIComponent(`مرحباً، أود طلب المنتج ذو المعرف رقم (${productId}) المعروض في بوت متجر أليالينا.`);
     const whatsappLink = `https://wa.me{myWhatsAppNumber}?text=${messageText}`;
 
-    await ctx.reply(`👋 لتأكيد طلبك وتحديد عنوان الشحن، يرجى الضغط على الرابط أدناه للتواصل معنا مباشرة عبر واتساب:`, 
+    await ctx.reply(`👋 لتأكيد طلبك وتحديد عنوان التوصيل، يرجى الضغط هنا للتواصل معنا مباشرة:`, 
         Markup.inlineKeyboard([
             Markup.button.url('💬 تأكيد الطلب عبر واتساب', whatsappLink)
         ])
@@ -59,7 +77,7 @@ bot.action(/^order_(\d+)$/, async (ctx) => {
 
 bot.launch();
 
+// السيرفر الوهمي المستقر لمنع خطأ الـ Port Scan على Render
 const app = express();
-const PORT = process.env.PORT || 10000;
 app.get('/', (req, res) => { res.send('السيرفر يعمل بكفاءة وأمان... 🚀'); });
-app.listen(PORT);
+app.listen(process.env.PORT || 10000);

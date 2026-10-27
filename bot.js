@@ -1,8 +1,8 @@
 const { Telegraf, Markup } = require('telegraf');
 const { fetchAlyalinaProducts } = require('./scraper');
+const express = require('express'); // استيراد مكتبة السيرفر الوهمي
 
-// ضع هنا التوكن الخاص بالبوت الذي حصلت عليه من BotFather
-//const BOT_TOKEN = '8698192117:AAE6YUBg2XluoXe0nHVYlR5AFyGNFNEsv-k';
+// توكن البوت محاط بعلامات الاقتباس وجاهز تماماً
 const bot = new Telegraf('8698192117:AAE6YUBg2XluoXe0nHVYlR5AFyGNFNEsv-k');
 
 bot.start((ctx) => {
@@ -16,11 +16,11 @@ bot.hears('🛍️ عرض كتالوج المنتجات الحالية', async (
     
     const liveProducts = await fetchAlyalinaProducts();
 
-    if (liveProducts.length === 0) {
+    if (!liveProducts || liveProducts.length === 0) {
         return ctx.reply('❌ عذراً، لم نتمكن من تحديث الأسعار من الموقع حالياً. يرجى المحاولة بعد قليل.');
     }
 
-    // عرض أول 10 منتجات تم سحبها لمنع حظر البوت بسبب كثرة الرسائل دفعة واحدة
+    // عرض أول 10 منتجات تم سحبها لمنع حظر البوت
     const itemsToShow = liveProducts.slice(0, 10);
 
     for (const product of itemsToShow) {
@@ -35,7 +35,6 @@ bot.hears('🛍️ عرض كتالوج المنتجات الحالية', async (
                 ])
             });
         } catch (imgError) {
-            // حل بديل في حال وجود مشكلة برابط الصورة المسحوبة من الموقع
             await ctx.reply(caption, {
                 parse_mode: 'Markdown',
                 ...Markup.inlineKeyboard([
@@ -46,12 +45,34 @@ bot.hears('🛍️ عرض كتالوج المنتجات الحالية', async (
     }
 });
 
-// التعامل مع كبسولات الطلب الفورية
-bot.action(/^order_(\d+)$/, (ctx) => {
+// التعامل مع كبسولات الطلب الفورية وتحويلها لواتساب الأعمال الخاص بك
+bot.action(/^order_(\d+)$/, async (ctx) => {
     const productId = ctx.match[1];
     ctx.answerCbQuery();
-    ctx.reply(`📝 تم تسجيل طلبك للمنتج رقم ${productId}. سيتم توجيهك لتأكيد الشحن والتوصيل.`);
+
+    const myWhatsAppNumber = "905366303897"; // رقمك بصيغته الدولية الصحيحة
+    const messageText = encodeURIComponent(`مرحباً، أود طلب المنتج ذو المعرف الرقمي (${productId}) المعروض في بوت التليجرام الخاص بمتجر أليالينا.`);
+    const whatsappLink = `https://wa.me{myWhatsAppNumber}?text=${messageText}`;
+
+    await ctx.reply(`👋 لتأكيد طلبك وتحديد عنوان الشحن، يرجى الضغط على الرابط أدناه للتواصل معنا مباشرة عبر واتساب:`, 
+        Markup.inlineKeyboard([
+            Markup.button.url('💬 تأكيد الطلب عبر واتساب', whatsappLink)
+        ])
+    );
 });
 
 bot.launch();
 console.log('البوت متصل بموقع Alyalina ومستعد للعمل وتلقي الطلبات...');
+
+// -------------------------------------------------------------
+// الجزء الخاص بالحل الثاني: إنشاء سيرفر وهمي لمنع انقطاع السيرفر (Port Binding)
+const app = express();
+const PORT = process.env.PORT || 10000;
+
+app.get('/', (req, res) => {
+   res.send('البوت يعمل بكفاءة وأمان في الخلفية... 🚀');
+});
+
+app.listen(PORT, () => {
+   console.log(`تم تشغيل المنفذ الوهمي لـ Render بنجاح على المخرج: ${PORT}`);
+});

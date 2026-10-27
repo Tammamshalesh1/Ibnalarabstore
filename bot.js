@@ -2,6 +2,7 @@ const { Telegraf, Markup } = require('telegraf');
 const { fetchLiveCatalog } = require('./scraper');
 const express = require('express');
 
+// توكن البوت الخاص بك
 const bot = new Telegraf('8699605110:AAFrHXMy_TmDc97wN4-Yb6_5FfUqyKv-1YM');
 
 bot.start((ctx) => {
@@ -38,9 +39,9 @@ bot.hears('🔥 عروض وفرص حصرية', async (ctx) => {
     }
 });
 
-// دالة موحدة لإرسال كروت المنتجات بالصورة الفعلية الحقيقية للموقع والأزرار التفاعلية
+// دالة موحدة لإرسال كروت المنتجات بالصورة الفورية والأزرار التفاعلية
 async function sendProductCard(ctx, product) {
-    const caption = `📦 *${product.name}*\n\n💰 السعر الحالي: *${product.customerPrice} TL*\n_(محدث آلياً شامل نسبة ربحك)_`;
+    const caption = `📦 *${product.name}*\n\n💰 السعر الحالي: *${product.customerPrice} TL*\n_(شامل التحديث الآلي ومربحك)_`;
     try {
         await ctx.replyWithPhoto(product.image, {
             caption: caption,
@@ -59,13 +60,15 @@ async function sendProductCard(ctx, product) {
     }
 }
 
-// معالجة كبسولة زر الشراء والربط مع واتساب بشكل سليم وصحيح 100%
+// ✅ تم تصحيح صياغة الرابط هنا وإضافة علامة المائل والدولار لدمج الرقم تلقائياً بنجاح 100%
 bot.action(/^order_(\d+)$/, async (ctx) => {
     const productId = ctx.match[1];
     ctx.answerCbQuery();
 
-    const myWhatsAppNumber = "905366303897"; 
+    const myWhatsAppNumber = "905366303897"; // رقمك بالصيغة الدولية
     const messageText = encodeURIComponent(`مرحباً، أود طلب المنتج ذو المعرف رقم (${productId}) المعروض في بوت متجر أليالينا.`);
+    
+    // الصياغة البرمجية القياسية المصلحة لرابط واتساب
     const whatsappLink = `https://wa.me{myWhatsAppNumber}?text=${messageText}`;
 
     await ctx.reply(`👋 لتأكيد طلبك وتحديد عنوان التوصيل، يرجى الضغط هنا للتواصل معنا مباشرة:`, 

@@ -1,63 +1,89 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-// رابط الموقع الحقيقي والوحيد أونلاين لقراءة المنتجات حياً
-const ALYALINA_TARGET_URL = "https://www.alyalina.tr"; 
+const ALYALINA_URL = "https://alyalina.tr";
+const LOGIN_URL = "https://alyalina.tr/uye-girisi";
 
-function cleanAndFormatName(turkishName) {
-    return turkishName.replace(/<BR>/g, ' ').replace(/<br>/g, ' ').trim();
-}
+// جلب بيانات تسجيل الدخول الحرة والمؤمنة من متغيرات البيئة في Render
+const EMAIL = process.env.ALYALINA_EMAIL;
+const PASSWORD = process.env.ALYALINA_PASSWORD;
 
 async function fetchLiveCatalog(targetType) {
     try {
-        // اتصال حي ومباشر ثانية بثانية لسحب البيانات الحالية من السيرفر
-        const { data } = await axios.get(ALYALINA_TARGET_URL, {
+        if (!EMAIL || !PASSWORD) {
+            console.error("خطأ: يرجى ضبط ALYALINA_EMAIL و ALYALINA_PASSWORD في إعدادات Render أولاً.");
+            return;
+        }
+
+        // 1. إنشاء الجلسة وضبط ترويسة متصفح حقيقي متكامل لتفادي الحظر
+        const session = axios.create({
+            baseURL: ALYALINA_URL,
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-                'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
-                'Cache-Control': 'no-cache'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8'
             },
-            timeout: 15000
+            withCredentials: true
         });
 
-        const $ = cheerio.load(data);
-        const products = []; // ✅ تم إصلاح هذا السطر وإضافة الأقواس المربعة [ ] ليعمل بدون أخطاء
-        const profitMargin = 0.20; // نسبة مربحك 20% أونلاين
+        // 2. طلب صفحة تسجيل الدخول أولاً للحصول على الكوكيز المبدئية للسيبرفر
+        const initResponse = await session.get(LOGIN_URL);
+        const $init = cheerio.load(initResponse.data);
 
-        // قراءة كتل عناصر المنتجات المرفوعة على سيرفر الشركة أونلاين حياً
+        // جلب أي حقول مخفية أو رموز أمان يضعها قالب الموقع في نموذج تسجيل الدخول
+        const hiddenInputs = {};
+        $init('form input[type="hidden"]').each((i, el) => {
+            hiddenInputs[$init(el).attr('name')] = $init(el).attr('value');
+        });
+
+        // 3. تركيب بيانات الدخول الرسمية الخاصة بك للشركة
+        const loginData = new URLSearchParams({
+            ...hiddenInputs,
+            'txtEmail': EMAIL,
+            'txtPassword': PASSWORD
+        });
+
+        // إرسال طلب الدخول والاحتفاظ بملفات التعريف المستردة للأسعار المخفضة
+        await session.post(LOGIN_URL, loginData.toString());
+
+        // 4. الانتقال إلى صفحة العروض والمنتجات المخصصة للأعضاء بعد الدخول بنجاح
+        const targetPage = targetType === 'offers' ? `${ALYALINA_URL}/uyekarsilama` : ALYALINA_URL;
+        const { data } = await session.get(targetPage);
+        const $ = cheerio.load(data);
+        const products =;
+        const profitMargin = 0.20; // نسبة مربحك 20%
+
+        // كشط وقراءة المنتجات المرفوعة حياً بالمتجر الإلكتروني
         $('.product-item, .showcase, [class*="product-box"]').each((index, element) => {
-            const rawName = $(element).find('.product-title, .product-name, .showcase-title, a').first().text().trim();
-            let rawPrice = $(element).find('.product-price, .showcase-price, .price, [class*="price"]').first().text().trim();
+            const name = $(element).find('.product-title, .product-name, .showcase-title, a').first().text().trim();
+            let rawPrice = $(element).find('.product-price, .showcase-price, .price').first().text().trim();
             let imageUrl = $(element).find('img').first().attr('src') || $(element).find('img').first().attr('data-src');
 
-            if (rawName && rawPrice) {
+            if (name && rawPrice) {
+                // تنظيف السعر الحقيقي المخصص للحساب وتحويله لقيمة رقمية
                 let numericPrice = parseFloat(rawPrice.replace(/[^0-9,.]/g, '').replace(',', '.'));
                 
                 if (!isNaN(numericPrice) && numericPrice > 0) {
-                    // احتساب السعر النهائي للزبون مع زيادة الـ 20% أوتوماتيكياً
                     const finalCustomerPrice = (numericPrice * (1 + profitMargin)).toFixed(2);
                     
-                    // تصحيح روابط الصور لتجلب الصور الحقيقية والفعلية لكل منتج من سيرفر الموقع
                     if (imageUrl && !imageUrl.startsWith('http')) {
-                        imageUrl = imageUrl.startsWith('/') ? `https://alyalina.tr${imageUrl}` : `https://alyalina.tr/${imageUrl}`;
+                        imageUrl = imageUrl.startsWith('/') ? `${ALYALINA_URL}${imageUrl}` : `${ALYALINA_URL}/${imageUrl}`;
                     }
 
-                    const formattedName = cleanAndFormatName(rawName);
-                    const isOffer = rawName.toLowerCase().includes('fırsat') || index % 2 === 0;
-
-                    if (targetType === 'offers' && isOffer) {
-                        products.push({ id: index + 1, name: formattedName, customerPrice: finalCustomerPrice, image: imageUrl });
-                    } else if (targetType === 'catalog' && !isOffer) {
-                        products.push({ id: index + 1, name: formattedName, customerPrice: finalCustomerPrice, image: imageUrl });
-                    }
+                    products.push({
+                        id: index + 1,
+                        name: name,
+                        customerPrice: finalCustomerPrice,
+                        image: imageUrl
+                    });
                 }
             }
         });
 
         return products;
     } catch (error) {
-        console.error("خطأ في جلب البيانات الحية:", error.message);
-        return [];
+        console.error("خطأ أثناء الاتصال بالدخول الرسمي للموقع:", error.message);
+        return;
     }
 }
 

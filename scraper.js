@@ -1,19 +1,16 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-// رابط الموقع الحقيقي والوحيد أونلاين
-const ALYALINA_TARGET_URL = "https://www.alyalina.tr"; 
+// رابط الموقع الحقيقي والوحيد أونلاين لقراءة المنتجات حياً
+const ALYALINA_TARGET_URL = "https://www.alyalina.tr/uyekarsilama"; 
 
-// دالة برمجية بديلة لتنظيف وترجمة النصوص التركية أوتوماتيكياً بدون قاموس ثابت
 function cleanAndFormatName(turkishName) {
-    let cleanText = turkishName.replace(/<BR>/g, ' ').replace(/<br>/g, ' ').trim();
-    // هنا تظهر الأسماء باللغة القياسية للموقع أونلاين مباشرة
-    return cleanText;
+    return turkishName.replace(/<BR>/g, ' ').replace(/<br>/g, ' ').trim();
 }
 
 async function fetchLiveCatalog(targetType) {
     try {
-        // اتصال حي أونلاين بالكامل ثانية بثانية لسحب البيانات الحالية
+        // اتصال حي ومباشر ثانية بثانية لسحب البيانات الحالية من السيرفر
         const { data } = await axios.get(ALYALINA_TARGET_URL, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
@@ -24,7 +21,7 @@ async function fetchLiveCatalog(targetType) {
         });
 
         const $ = cheerio.load(data);
-        const products =;
+        const products = []; // ✅ تم إصلاح هذا السطر وإضافة الأقواس المربعة [ ] ليعمل بدون أخطاء
         const profitMargin = 0.20; // نسبة مربحك 20% أونلاين
 
         // قراءة كتل عناصر المنتجات المرفوعة على سيرفر الشركة أونلاين حياً
@@ -42,7 +39,7 @@ async function fetchLiveCatalog(targetType) {
                     
                     // تصحيح روابط الصور لتجلب الصور الحقيقية والفعلية لكل منتج من سيرفر الموقع
                     if (imageUrl && !imageUrl.startsWith('http')) {
-                        imageUrl = imageUrl.startsWith('/') ? `https://www.alyalina.tr${imageUrl}` : `https://alyalina.tr{imageUrl}`;
+                        imageUrl = imageUrl.startsWith('/') ? `https://alyalina.tr${imageUrl}` : `https://alyalina.tr/${imageUrl}`;
                     }
 
                     const formattedName = cleanAndFormatName(rawName);
@@ -60,7 +57,7 @@ async function fetchLiveCatalog(targetType) {
         return products;
     } catch (error) {
         console.error("خطأ في جلب البيانات الحية:", error.message);
-        return;
+        return [];
     }
 }
 

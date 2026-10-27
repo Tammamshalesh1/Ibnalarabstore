@@ -3,7 +3,7 @@ const { fetchAlyalinaProducts } = require('./scraper');
 const express = require('express'); // استيراد مكتبة السيرفر الوهمي
 
 // توكن البوت محاط بعلامات الاقتباس وجاهز تماماً
-const bot = new Telegraf('8698192117:AAE6YUBg2XluoXe0nHVYlR5AFyGNFNEsv-k');
+const bot = new Telegraf('8699605110:AAFrHXMy_TmDc97wN4-Yb6_5FfUqyKv-1YM');
 
 bot.start((ctx) => {
     ctx.reply('مرحباً بك في متجر منتجات Alyalina المؤتمت! 🌸\nاضغط على الزر أدناه لجلب أحدث المنتجات والأسعار المحدثة تلقائياً مع هامش الربح الخاص بك.', 

@@ -3,7 +3,7 @@ const { fetchLiveCatalog } = require('./scraper');
 const express = require('express');
 
 // توكن البوت الخاص بك
-const bot = new Telegraf('8699605110:AAFrHXMy_TmDc97wN4-Yb6_5FfUqyKv-1YM');
+const bot = new Telegraf('8699605110:AAEtc3bfXi7X_2uas8Qz_7YB7QxirjUDdUI');
 
 bot.start((ctx) => {
     ctx.reply('مرحباً بك في متجر أليالينا المؤتمت بالكامل! 🌸\nيرجى اختيار القسم الذي ترغب في تصفحه بأسعاره وعروضه الحقيقية الحالية المباشرة من الموقع:', 

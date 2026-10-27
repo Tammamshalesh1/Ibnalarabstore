@@ -31,7 +31,8 @@ async function fetchLiveCatalog(targetType) {
         // جلب الصفحة الرئيسية لقراءة البيانات الحية
         const { data } = await session.get(ALYALINA_URL);
         const $ = cheerio.load(data);
-        const products =;
+        const products = []; //  صحيح
+
         const profitMargin = 0.15; // نسبة ربحك الثابتة 15%
 
         // تحديد المستهدف بناءً على طلب المستخدم (عروض وفرص ممتازة أم منتجات عامة)

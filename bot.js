@@ -1,8 +1,8 @@
 const { Telegraf, Markup } = require('telegraf');
 const { fetchAlyalinaProducts } = require('./scraper');
-const express = require('express'); // استيراد مكتبة السيرفر الوهمي
+const express = require('express');
 
-// توكن البوت محاط بعلامات الاقتباس وجاهز تماماً
+// توكن البوت الخاص بك
 const bot = new Telegraf('8699605110:AAFrHXMy_TmDc97wN4-Yb6_5FfUqyKv-1YM');
 
 bot.start((ctx) => {
@@ -12,7 +12,7 @@ bot.start((ctx) => {
 });
 
 bot.hears('🛍️ عرض كتالوج المنتجات الحالية', async (ctx) => {
-    await ctx.reply('⏳ جاري الاتصال بموقع Alyalina وسحب أحدث الأسعار واحتساب نسبة الـ 15% تلقائياً...');
+    // ❌ تم حذف رسالة التحميل والانتظار تماماً بناءً على طلبك لراحة زبائنك
     
     const liveProducts = await fetchAlyalinaProducts();
 
@@ -20,10 +20,8 @@ bot.hears('🛍️ عرض كتالوج المنتجات الحالية', async (
         return ctx.reply('❌ عذراً، لم نتمكن من تحديث الأسعار من الموقع حالياً. يرجى المحاولة بعد قليل.');
     }
 
-    // عرض أول 10 منتجات تم سحبها لمنع حظر البوت
-    const itemsToShow = liveProducts.slice(0, 10);
-
-    for (const product of itemsToShow) {
+    // تم تعديل الكود ليعرض جميع المنتجات التي يتم سحبها من الموقع دون تقييدها بـ 10 أو 3 فقط
+    for (const product of liveProducts) {
         const caption = `📦 *${product.name}*\n\n💰 السعر الحالي للمستهلك: *${product.customerPrice} TL*\n_(شامل التحديث الآلي ومربحك)_`;
         
         try {
@@ -35,6 +33,7 @@ bot.hears('🛍️ عرض كتالوج المنتجات الحالية', async (
                 ])
             });
         } catch (imgError) {
+            // حل احتياطي في حال واجه التليجرام مشكلة في قراءة رابط الصورة ليظهر النص والأزرار للعميل دائماً
             await ctx.reply(caption, {
                 parse_mode: 'Markdown',
                 ...Markup.inlineKeyboard([
@@ -50,7 +49,7 @@ bot.action(/^order_(\d+)$/, async (ctx) => {
     const productId = ctx.match[1];
     ctx.answerCbQuery();
 
-    const myWhatsAppNumber = "905366303897"; // رقمك بصيغته الدولية الصحيحة
+    const myWhatsAppNumber = "905366303897"; // رقمك بصيغته الدولية
     const messageText = encodeURIComponent(`مرحباً، أود طلب المنتج ذو المعرف الرقمي (${productId}) المعروض في بوت التليجرام الخاص بمتجر أليالينا.`);
     const whatsappLink = `https://wa.me{myWhatsAppNumber}?text=${messageText}`;
 
@@ -65,7 +64,7 @@ bot.launch();
 console.log('البوت متصل بموقع Alyalina ومستعد للعمل وتلقي الطلبات...');
 
 // -------------------------------------------------------------
-// الجزء الخاص بالحل الثاني: إنشاء سيرفر وهمي لمنع انقطاع السيرفر (Port Binding)
+// خادم Express الوهمي لإرضاء منصة Render ومنع خطأ الـ Port Scan
 const app = express();
 const PORT = process.env.PORT || 10000;
 

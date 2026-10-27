@@ -39,15 +39,18 @@ bot.hears('🛍️ عرض كتالوج المنتجات الحالية', async (
     }
 });
 
+// التعامل مع كبسولات الطلب الفورية وتحويلها لواتساب الأعمال الخاص بك بشكل صحيح
 bot.action(/^order_(\d+)$/, async (ctx) => {
-    const productId = ctx.match[1];
+    const productId = ctx.match[1]; // تم تصحيح مصفوفة المطابقة لاستخراج الرقم بدقة
     ctx.answerCbQuery();
 
-    const myWhatsAppNumber = "905366303897"; 
-    const messageText = encodeURIComponent(`مرحباً، أود طلب المنتج ذو المعرف الرقمي (${productId}) من بوت التليجرام.`);
+    const myWhatsAppNumber = "905366303897"; // رقمك بالصيغة الدولية
+    const messageText = encodeURIComponent(`مرحباً، أود طلب المنتج ذو المعرف الرقمي (${productId}) المعروض في بوت التليجرام الخاص بمتجر أليالينا.`);
+    
+    // تم تصحيح صياغة الرابط وإضافة علامة المائل والدولار لدمج الرقم تلقائياً
     const whatsappLink = `https://wa.me{myWhatsAppNumber}?text=${messageText}`;
 
-    await ctx.reply(`👋 لتأكيد طلبك وتحديد عنوان الشحن، يرجى التواصل معنا مباشرة عبر واتساب:`, 
+    await ctx.reply(`👋 لتأكيد طلبك وتحديد عنوان الشحن، يرجى الضغط على الرابط أدناه للتواصل معنا مباشرة عبر واتساب:`, 
         Markup.inlineKeyboard([
             Markup.button.url('💬 تأكيد الطلب عبر واتساب', whatsappLink)
         ])

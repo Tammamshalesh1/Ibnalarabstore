@@ -2,7 +2,7 @@ const { Telegraf, Markup } = require('telegraf');
 const { fetchAlyalinaProducts } = require('./scraper');
 
 // ضع هنا التوكن الخاص بالبوت الذي حصلت عليه من BotFather
-const BOT_TOKEN = '8698192117:AAE6YUBg2XluoXe0nHVYlR5AFyGNFNEsv-k';
+//const BOT_TOKEN = '8698192117:AAE6YUBg2XluoXe0nHVYlR5AFyGNFNEsv-k';
 const bot = new Telegraf('8698192117:AAE6YUBg2XluoXe0nHVYlR5AFyGNFNEsv-k');
 
 bot.start((ctx) => {

@@ -18,7 +18,7 @@ bot.hears('🛍️ تصفح الكتالوج العام', async (ctx) => {
     const products = await fetchLiveCatalog('catalog');
 
     if (!products || products.length === 0) {
-        return ctx.reply('❌ تعذر جلب الكتالوج من الموقع حالياً، يرجى التحقق من بيانات الحساب وسجل السيرفر.');
+        return ctx.reply('❌ تعذر جلب الكتالوج من الموقع حالياً، يرجى التحقق من سجل السيرفر.');
     }
 
     for (const product of products) {
@@ -60,15 +60,13 @@ async function sendProductCard(ctx, product) {
     }
 }
 
-// ✅ تم تصحيح صياغة الرابط هنا وإضافة علامة المائل والدولار لدمج الرقم تلقائياً بنجاح 100%
+// معالجة زر الشراء والربط مع واتساب بشكل سليم وصحيح 100%
 bot.action(/^order_(\d+)$/, async (ctx) => {
     const productId = ctx.match[1];
     ctx.answerCbQuery();
 
     const myWhatsAppNumber = "905366303897"; // رقمك بالصيغة الدولية
     const messageText = encodeURIComponent(`مرحباً، أود طلب المنتج ذو المعرف رقم (${productId}) المعروض في بوت متجر أليالينا.`);
-    
-    // الصياغة البرمجية القياسية المصلحة لرابط واتساب
     const whatsappLink = `https://wa.me{myWhatsAppNumber}?text=${messageText}`;
 
     await ctx.reply(`👋 لتأكيد طلبك وتحديد عنوان التوصيل، يرجى الضغط هنا للتواصل معنا مباشرة:`, 

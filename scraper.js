@@ -2,7 +2,7 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 
 // رابط الموقع الحقيقي والوحيد أونلاين لقراءة المنتجات حياً
-const ALYALINA_TARGET_URL = "https://www.alyalina.tr/uyekarsilama"; 
+const ALYALINA_TARGET_URL = "https://www.alyalina.tr"; 
 
 function cleanAndFormatName(turkishName) {
     return turkishName.replace(/<BR>/g, ' ').replace(/<br>/g, ' ').trim();
